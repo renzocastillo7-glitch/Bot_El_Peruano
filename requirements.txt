@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+anthropic
+python-dotenv
+playwright
+Pillow
