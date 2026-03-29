@@ -33,9 +33,16 @@ def scrape_el_peruano_norms():
                 texto = texto_div.get_text(separator=" ", strip=True)
                 
                 enlace = ""
-                a_tag = texto_div.find("a")
-                if a_tag and a_tag.has_attr("href"):
-                    enlace = a_tag["href"]
+                botones_div = art.find("div", class_="ediciones_botones")
+                if botones_div:
+                    btn_descarga = botones_div.find("input", attrs={"data-tipo": "DiNl"})
+                    if btn_descarga and btn_descarga.has_attr("data-url"):
+                        enlace = btn_descarga["data-url"]
+                        
+                if not enlace:
+                    a_tag = texto_div.find("a")
+                    if a_tag and a_tag.has_attr("href"):
+                        enlace = a_tag["href"]
                     
                 norms_list.append({
                     "text": texto,
