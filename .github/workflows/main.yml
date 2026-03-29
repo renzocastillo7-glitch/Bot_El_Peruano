@@ -1,0 +1,29 @@
+name: Bot de Normas Legales Diario
+on:
+  schedule:
+      - cron: '0 11 * * *'
+        workflow_dispatch:
+        jobs:
+          run-bot:
+              runs-on: ubuntu-latest
+                  steps:
+                      - name: Checkout Repository
+                            uses: actions/checkout@v4
+                                - name: Setup Python
+                                      uses: actions/setup-python@v5
+                                            with:
+                                                    python-version: '3.12'
+                                                            cache: 'pip'
+                                                                - name: Install Dependencies
+                                                                      run: |
+                                                                              python -m pip install --upgrade pip
+                                                                                      pip install -r requirements.txt
+                                                                                              playwright install chromium
+                                                                                                  - name: Run Bot
+                                                                                                        env:
+                                                                                                                ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+                                                                                                                        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+                                                                                                                                LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+                                                                                                                                      run: |
+                                                                                                                                              python main.py
+                                                                                                                                              
