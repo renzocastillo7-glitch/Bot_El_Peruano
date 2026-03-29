@@ -1,0 +1,7 @@
+name: Bot de Normas Legales Diario
+
+on:
+  schedule:
+      - cron: '0 11 * * *'
+        workflow_dispatch:
+        
