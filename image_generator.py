@@ -73,43 +73,32 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
         os.remove(dalle_img_path)
     
     # Procesar bloques a tarjetas HTML
-    sum_data = infographic_data.get("summary", {})
-    # Mapear los iconos
-    icons = {"what": "🔍", "who": "👥", "why": "💡", "action": "🚀", "deadline": "📅", "extra": "📌"}
+    blocks = infographic_data.get("blocks", [])
     
     # Construir las tarjetas directamente en dos columnas (Izquierda y Derecha)
     cards_html_left = ""
     cards_html_right = ""
     
-    card_index = 0
-    for key in ["what", "who", "why", "action", "deadline", "extra"]:
-        if key in sum_data and sum_data[key].strip():
-            # Dividir clave en titulo y texto si tiene formato "Título: Texto"
-            parts = sum_data[key].split(":", 1)
-            if len(parts) == 2:
-                c_title = parts[0].strip()
-                c_text = parts[1].strip()
-            else:
-                c_title = "Dato Clave"
-                c_text = sum_data[key].strip()
+    for idx, block in enumerate(blocks[:6]):
+        c_title = block.get("title", "Dato Clave")
+        c_text = block.get("content", "")
+        c_icon = block.get("icon", "📌")
 
-            block_html = f"""
-            <div class="floating-block">
-                <div class="block-header">
-                    <span class="icon">{icons.get(key, "📌")}</span>
-                    <div class="block-title">{c_title}</div>
-                </div>
-                <div class="block-body">{c_text}</div>
+        block_html = f"""
+        <div class="floating-block">
+            <div class="block-header">
+                <span class="icon">{c_icon}</span>
+                <div class="block-title">{c_title}</div>
             </div>
-            """
-            
-            # Asignar pares a la izquierda, impares a la derecha
-            if card_index % 2 == 0:
-                cards_html_left += block_html
-            else:
-                cards_html_right += block_html
-                
-            card_index += 1
+            <div class="block-body">{c_text}</div>
+        </div>
+        """
+        
+        # Asignar pares a la izquierda, impares a la derecha
+        if idx % 2 == 0:
+            cards_html_left += block_html
+        else:
+            cards_html_right += block_html
         
     title = infographic_data.get("title", f"REPORTE: {infographic_type.upper()}")
     subtitle = infographic_data.get("subtitle", "")
