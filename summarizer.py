@@ -58,7 +58,7 @@ SI EL PUNTAJE ES MENOR A 65: Setear "publish_decision": false.
 - ESTRUCTURA VISUAL: Párrafos cortos (2 a 3 líneas máximo). NO uses listas con viñetas ni enumeraciones robóticas.
 - APERTURA: Empieza indicando directamente la acción y el nombre completo de la norma (ej. "Publican la Ley N° 31xxx que establece...", "Se aprueba la Resolución N° 123...").
 - CUERPO: Explica el impacto práctico o los antecedentes de forma fluida.
-- VIGENCIA: Antes de finalizar, añade expresamente un párrafo indicando la fecha o momento en que entra en vigencia (ej. "Esta norma entra en vigencia el...").
+- VIGENCIA: Antes de finalizar, LOCALIZA LA FECHA EXACTA DE ENTRADA EN VIGENCIA y ponla explícitamente en el texto (ej. "Esta norma rige desde el 1 de abril de 2026"). NUNCA digas "verifica la fecha en el documento", dila tú mismo o indica claramente si entra al día siguiente de su publicación.
 - CIERRE: Termina OBLIGATORIAMENTE con exactamente este texto final (usando el placeholder '[URL_DOC]'):
 
 📄 Descarga el documento oficial aquí: [URL_DOC]

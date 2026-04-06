@@ -97,86 +97,92 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
         <style>
             body {{
                 margin: 0;
-                padding: 0;
+                padding: 60px 80px;
                 font-family: 'Inter', sans-serif;
-                background: {bg_gradient};
+                background: linear-gradient(135deg, #f8faff 0%, #e6effa 100%);
                 width: 1080px;
-                height: 1920px;
-                color: #333;
+                min-height: 1080px;
+                height: auto;
+                color: #1e293b;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 box-sizing: border-box;
-                padding: 60px;
             }}
             .header {{
                 text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 40px;
+                width: 100%;
             }}
             .title {{
-                font-size: 75px;
-                font-weight: 800;
-                color: {accent_color};
+                font-size: 80px;
+                font-weight: 900;
+                color: #0f172a;
                 line-height: 1.1;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
+                text-wrap: balance;
             }}
             .subtitle {{
-                font-size: 40px;
+                font-size: 42px;
                 font-weight: 600;
-                color: #627d98;
+                color: #475569;
+                text-wrap: balance;
+            }}
+            .illustration-container {{
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                margin-bottom: 60px;
             }}
             .illustration {{
-                width: 700px;
-                height: 700px;
-                margin: 20px auto 40px auto;
+                width: 800px;
+                height: 600px;
                 background-image: url('{b64_image}');
                 background-size: cover;
                 background-position: center;
-                border-radius: 30px;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                border-radius: 40px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+                border: 8px solid white;
             }}
             .grid {{
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 30px;
+                gap: 40px;
                 width: 100%;
+                margin-bottom: 40px;
             }}
             .card {{
-                background: white;
-                border-left: 10px solid {primary_color};
-                border-radius: 15px;
-                padding: 30px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 25px;
+                padding: 40px;
+                box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+                border-left: 12px solid {primary_color};
+                display: flex;
+                flex-direction: column;
             }}
             .card-header {{
                 display: flex;
                 align-items: center;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
             }}
             .icon {{
-                font-size: 45px;
-                margin-right: 15px;
+                font-size: 55px;
+                margin-right: 20px;
             }}
             .card-title {{
-                font-size: 32px;
+                font-size: 40px;
                 font-weight: 800;
-                color: {accent_color};
+                color: #0f172a;
             }}
             .card-body {{
-                font-size: 26px;
-                color: #486581;
-                line-height: 1.4;
-            }}
-            .footer {{
-                margin-top: auto;
-                text-align: center;
-                font-size: 24px;
-                color: #9fb3c8;
-                font-weight: 600;
+                font-size: 32px;
+                color: #334155;
+                line-height: 1.5;
+                font-weight: 500;
             }}
         </style>
     </head>
@@ -186,16 +192,12 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
             <div class="subtitle">{subtitle}</div>
         </div>
         
-        <!-- Si no hay imagen (no api key), el cuadro simplemente estara vacio/transparente o no se vera el content -->
-        {'<div class="illustration"></div>' if b64_image else ''}
+        {'<div class="illustration-container"><div class="illustration"></div></div>' if b64_image else ''}
         
         <div class="grid">
             {cards_html}
         </div>
         
-        <div class="footer">
-            Generado autmáticamente por AI Tributario
-        </div>
     </body>
     </html>
     """
@@ -207,7 +209,7 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
     print("Renderizando HTML a PNG resolucion HD...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport={'width': 1080, 'height': 1920}, device_scale_factor=2)
+        page = browser.new_page(viewport={'width': 1080, 'height': 800}, device_scale_factor=2)
         # Load local HTML
         page.goto(f"file://{os.path.abspath(html_file)}", wait_until="networkidle")
         # Esperar a que carguen fuentes
