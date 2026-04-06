@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def summarize_norms(norms_text):
+def analyze_document(document_text, source_type):
     """
-    Usa Claude para filtrar normas tributarias de la SUNAT y generar un JSON
-    con el post y el texto de la infografía.
+    Analiza un documento tributario individual, calcula su score 0-100, genera 
+    el post para LinkedIn y crea la estructura JSON para la infografía.
     """
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -18,70 +18,111 @@ def summarize_norms(norms_text):
     client = anthropic.Anthropic(api_key=api_key)
     
     prompt = f"""
-Eres un experto tributario (contador o abogado) en Perú, dirigiéndote a colegas y dueños de negocios en LinkedIn.
+Eres un analista tributario senior de la SUNAT y creador de contenido B2B en LinkedIn.
+Se te ha proporcionado el texto de un documento legal/tributario proveniente de '{source_type}'.
+¡ATENCIÓN! Si el texto proporcionado contiene MÚLTIPLES resoluciones (como suele suceder en los cuadernillos de Casaciones o Informes masivos):
+1. Debes analizar rápidamente todas las resoluciones incluidas.
+2. Identifica y escoge ÚNICAMENTE la resolución que sea MÁS relevante según los criterios descritos abajo.
+3. Evalúa, puntúa y redacta TODO el análisis basándote DE FORMA EXCLUSIVA en esa única resolución seleccionada, ignorando por completo el resto del contenido.
 
-REGLAS DE FILTRADO:
-1. Filtra las normas y busca ÚNICAMENTE las relacionadas con tributos internos administrados por SUNAT (Impuesto a la Renta, IGV, ISC, ITAN, etc.).
-2. Incluye Leyes, Decretos Legislativos, Decretos Supremos, Resoluciones de Superintendencia y Casaciones relevantes.
-3. EXCLUYE tributación municipal, regional y temas de Aduanas (salvo que afecten a procesos de tributos internos como Percepciones, RUC o Devoluciones).
-4. IGNORA cualquier norma administrativa, militar, política, nombramientos, etc.
-5. Si HOY NO HAY NINGUNA NORMA QUE CUMPLA ESTOS REQUISITOS, tu respuesta debe ser ÚNICA y EXACTAMENTE esta palabra (sin nada más):
-NO_RELEVANT_NORMS
+# OBJETIVO PRINCIPAL
+Analizar el documento para determinar si es relevante publicarlo para profesionales contables, abogados y empresas en Perú. Si lo es, debes generar un post muy humano y redactar un layout estructurado para una infografía.
 
-REGLAS DE REDACCIÓN (Si hay normas relevantes):
-- Tono serio, analítico y directo. Lenguaje humano, en prosa y explicativo.
-- NO uses listas estructuradas, ni viñetas, que parezcan generadas por una IA.
-- Varía la frase de apertura en cada post, manteniendo la sobriedad.
-- NO uses logos ni menciones a marcas.
-- Emojis de forma mínima y estratégica (máximo 2 o 3 en todo el post).
-- Estructura obligatoria en bloques fluidos de texto (párrafos):
-  1. Resumen: Una explicación en prosa de 2 a 3 líneas sobre el contexto de la norma.
-  2. Análisis: Puntos clave redactados de forma fluida (sin viñetas robóticas).
-  3. Impacto: Un párrafo final que responda directamente: '¿Cómo afecta esto a los profesionales tributarios y contribuyentes?'
-  4. Cierra con un último párrafo que diga EXACTAMENTE: "📄 Descarga el documento oficial aquí: [Inserta aquí la URL de la norma que elegiste]"
-  5. Abajo de la URL, incluye estos Hashtags: #TributoContable #SUNAT #ContadoresPeru #NormasLegales
+# CRITERIOS DE INCLUSIÓN Y EXCLUSIÓN
+EXCLUIR INMEDIATAMENTE (Puntaje automático < 50):
+- Tributación municipal, regional, predial, arbitrios, alcabala, tasas locales.
+- Aduanas (A menos que esté intrínsecamente vinculado al IGV).
+- Designaciones de personal, actos administrativos internos, renuncias, nombramientos.
+- Resoluciones no vinculantes o de mero trámite.
 
-INFOGRAFÍA:
-Bajo ese mismo análisis, redacta también un texto ultrarresumido (4 o 5 líneas muy cortas) que servirá de concepto para generar una imagen o ilustración sobre el tema.
+INCLUIR Y PRIORIZAR (Aumenta el puntaje):
+- IGV, Impuesto a la Renta, ITAN, ISC.
+- Código Tributario, fiscalización, cobranza, sanciones y procedimientos vinculados a SUNAT.
+- Comprobantes de pago electrónicos (SIRE).
+- Informes SUNAT vinculantes o que aclaren casuísticas clave.
+- Jurisprudencia (Resoluciones del Tribunal Fiscal, Casaciones de la Corte Suprema).
 
-FORMATO DE SALIDA:
-Devuelve un JSON estrictamente válido, con dos propiedades: "linkedin_post" e "image_text". Sin markdown extra.
+# SISTEMA DE SCORING (0 a 100)
+Evalúa sobre 100 puntos basándote en:
+- Relevancia tributaria (0-25): ¿Es el core de tributos internos SUNAT?
+- Impacto práctico (0-25): ¿Afecta la liquidez, procesos diarios o genera contingencias a empresas?
+- Novedad (0-15): ¿Es un cambio nuevo o ratifica algo ya conocido de manera importante?
+- Alcance (0-15): ¿Afecta a muchos contribuyentes o solo a un nicho mínimo?
+- Urgencia (0-10): ¿Entra en vigor mañana o tiene un vencimiento cercano?
+- Utilidad comunicacional (0-10): ¿Es fácil y útil de explicar en LinkedIn?
 
-Lista JSON de normas extraídas (cada una con su texto y url):
-{norms_text}
+SI EL PUNTAJE ES MENOR A 65: Setear "publish_decision": false.
+
+# DIRECTRICES DE REDACCIÓN (Si publish_decision es true)
+- TONO DEL POST: Humano, analítico, directo y profesional. NADA de frases típicas de IA ("En conclusión", "En el panorama actual", "¡Hola red!").
+- ESTRUCTURA VISUAL: Párrafos cortos (2 a 3 líneas máximo). NO uses listas con viñetas ni enumeraciones robóticas.
+- APERTURA: Empieza indicando directamente la acción y el nombre completo de la norma (ej. "Publican la Ley N° 31xxx que establece...", "Se aprueba la Resolución N° 123...").
+- CUERPO: Explica el impacto práctico o los antecedentes de forma fluida.
+- VIGENCIA: Antes de finalizar, añade expresamente un párrafo indicando la fecha o momento en que entra en vigencia (ej. "Esta norma entra en vigencia el...").
+- CIERRE: Termina OBLIGATORIAMENTE con exactamente este texto final (usando el placeholder '[URL_DOC]'):
+
+📄 Descarga el documento oficial aquí: [URL_DOC]
+
+#Tributario #SUNAT #Contadores
+
+# DIRECTRICES DE INFOGRAFÍA E ILUSTRACIÓN 3D
+- Types permitidos para "infographic_type": 'alerta', 'guía', 'comparativo', 'cronograma', 'criterio jurisprudencial'.
+- Layout limit de 6 bloques, preferir conceptos cortos (2-5 palabras).
+- Además, redacta un "illustration_prompt" en inglés (máx 50 palabras) extremadamente detallado para que un modelo generador de imágenes (DALL-E) cree una ilustración 3D corporativa que acompañará tu análisis. Ejemplo: "A high quality 3D isometric illustration of a modern laptop with glowing neon outlines, tax documents flying out, floating shield icon, corporate blue and cyan color palette, clean light background, premium B2B style"
+
+# FORMATO DE SALIDA ESTRICTO JSON
+Sin Markdown adicional, debes devolver un de JSON con las siguientes llaves exactas:
+{{
+  "publish_decision": <boolean>,
+  "final_score": <number 0-100>,
+  "discard_reason": <string, si es false, explicar brevemente porqué>,
+  "source": <string, ej 'El Peruano', 'SUNAT', 'Tribunal Fiscal'>,
+  "document_type": <string, ej 'Casacion', 'Informe', 'Ley', 'RS'>,
+  "main_topic": <string>,
+  "summary_internal": <string>,
+  "linkedin_post": <string>,
+  "infographic_type": <string>,
+  "infographic_layout_json": {{
+      "title": <string>,
+      "subtitle": <string>,
+      "blocks": [
+           {{"title": <str>, "content": <str>, "icon": <str_basico_tipo_emoji>}}
+      ]
+  }},
+  "illustration_prompt": <string>,
+  "effective_date": <string, o null si no aplica>,
+  "confidence_score": <number 0-10>
+}}
+
+TEXTO A ANALIZAR:
+{document_text}
 """
-    
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=2000,
-            temperature=0.3,
-            system="Eres un experto tributario de SUNAT. Devuelve solo un JSON válido o la palabra NO_RELEVANT_NORMS si no hay normas.",
+            max_tokens=3000,
+            temperature=0.2,
+            system="Eres un estricto validador y analista JSON de datos tributarios de Perú.",
             messages=[
                 {"role": "user", "content": prompt}
             ]
         )
         content = response.content[0].text.strip()
         
-        if content == "NO_RELEVANT_NORMS" or "NO_RELEVANT_NORMS" in content:
-            return "NO_RELEVANT_NORMS"
-            
-        # Parse JSON en caso que el modelo agregue los backticks
+        # Parse JSON
         if content.startswith("```json"):
             content = content[7:-3].strip()
         elif content.startswith("```"):
             content = content[3:-3].strip()
             
         data = json.loads(content)
-        return dict(
-            post=data.get("linkedin_post", ""),
-            image=data.get("image_text", "")
-        )
+        return data
+        
     except Exception as e:
-        print(f"Error en summarize_norms: {e}")
+        print(f"Error en analyzer (Claude): {e}")
         return None
 
 if __name__ == "__main__":
-    t = "Resolución de Superintendencia N° 000042-2024/SUNAT: Modifican plazo de atraso de Registro de Ventas e Ingresos Electrónico."
-    res = summarize_norms(t)
-    print(res)
+    t = "Resolución Ministerial N° 123-2026-MTC. Designan a director en el área de telecomunicaciones."
+    res = analyze_document(t, "El Peruano")
+    print(json.dumps(res, indent=2, ensure_ascii=False))
