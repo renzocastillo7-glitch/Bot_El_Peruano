@@ -4,3 +4,6 @@ anthropic
 python-dotenv
 playwright
 Pillow
+supabase
+PyMuPDF
+openai
