@@ -74,11 +74,15 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
     
     # Procesar bloques a tarjetas HTML
     sum_data = infographic_data.get("summary", {})
+    # Mapear los iconos
     icons = {"what": "🔍", "who": "👥", "why": "💡", "action": "🚀", "deadline": "📅", "extra": "📌"}
     
-    # Convert cards_html to new floating format without card boxes
-    cards_html = ""
-    for idx, key in enumerate(["what", "who", "why", "action", "deadline", "extra"]):
+    # Construir las tarjetas directamente en dos columnas (Izquierda y Derecha)
+    cards_html_left = ""
+    cards_html_right = ""
+    
+    card_index = 0
+    for key in ["what", "who", "why", "action", "deadline", "extra"]:
         if key in sum_data and sum_data[key].strip():
             # Dividir clave en titulo y texto si tiene formato "Título: Texto"
             parts = sum_data[key].split(":", 1)
@@ -89,7 +93,7 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
                 c_title = "Dato Clave"
                 c_text = sum_data[key].strip()
 
-            cards_html += f"""
+            block_html = f"""
             <div class="floating-block">
                 <div class="block-header">
                     <span class="icon">{icons.get(key, "📌")}</span>
@@ -98,6 +102,14 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
                 <div class="block-body">{c_text}</div>
             </div>
             """
+            
+            # Asignar pares a la izquierda, impares a la derecha
+            if card_index % 2 == 0:
+                cards_html_left += block_html
+            else:
+                cards_html_right += block_html
+                
+            card_index += 1
         
     title = infographic_data.get("title", f"REPORTE: {infographic_type.upper()}")
     subtitle = infographic_data.get("subtitle", "")
@@ -240,36 +252,19 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
         <div class="infographic-core">
             <div class="decorative-lines"></div>
             
-            <!-- Izquierda: 3 items -->
+            <!-- Izquierda -->
             <div class="side-column" id="left-col">
+                {cards_html_left}
             </div>
             
             <!-- Centro: Imagen -->
             <div class="center-art"></div>
             
-            <!-- Derecha: 3 items -->
+            <!-- Derecha -->
             <div class="side-column" id="right-col">
+                {cards_html_right}
             </div>
         </div>
-
-        <!-- Script para distribuir las tarjetas de forma equitativa -->
-        <div id="hidden-cards" style="display: none;">
-            {cards_html}
-        </div>
-        
-        <script>
-            const blocks = document.querySelectorAll('#hidden-cards .floating-block');
-            const leftCol = document.getElementById('left-col');
-            const rightCol = document.getElementById('right-col');
-            
-            blocks.forEach((block, index) => {{
-                if(index % 2 === 0) {{
-                    leftCol.appendChild(block);
-                }} else {{
-                    rightCol.appendChild(block);
-                }}
-            }});
-        </script>
     </body>
     </html>
     """
