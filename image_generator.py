@@ -73,21 +73,31 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
         os.remove(dalle_img_path)
     
     # Procesar bloques a tarjetas HTML
-    blocks = infographic_data.get("blocks", [])
+    sum_data = infographic_data.get("summary", {})
+    icons = {"what": "🔍", "who": "👥", "why": "💡", "action": "🚀", "deadline": "📅", "extra": "📌"}
+    
+    # Convert cards_html to new floating format without card boxes
     cards_html = ""
-    for block in blocks[:6]:
-        icon = block.get("icon", "🔹")
-        btitle = block.get("title", "")
-        bcontent = block.get("content", "")
-        cards_html += f"""
-        <div class="card">
-            <div class="card-header">
-                <span class="icon">{icon}</span>
-                <span class="card-title">{btitle}</span>
+    for idx, key in enumerate(["what", "who", "why", "action", "deadline", "extra"]):
+        if key in sum_data and sum_data[key].strip():
+            # Dividir clave en titulo y texto si tiene formato "Título: Texto"
+            parts = sum_data[key].split(":", 1)
+            if len(parts) == 2:
+                c_title = parts[0].strip()
+                c_text = parts[1].strip()
+            else:
+                c_title = "Dato Clave"
+                c_text = sum_data[key].strip()
+
+            cards_html += f"""
+            <div class="floating-block">
+                <div class="block-header">
+                    <span class="icon">{icons.get(key, "📌")}</span>
+                    <div class="block-title">{c_title}</div>
+                </div>
+                <div class="block-body">{c_text}</div>
             </div>
-            <div class="card-body">{bcontent}</div>
-        </div>
-        """
+            """
         
     title = infographic_data.get("title", f"REPORTE: {infographic_type.upper()}")
     subtitle = infographic_data.get("subtitle", "")
@@ -97,13 +107,13 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
         <style>
             body {{
                 margin: 0;
-                padding: 60px 80px;
-                font-family: 'Inter', sans-serif;
-                background: linear-gradient(135deg, #f8faff 0%, #e6effa 100%);
+                padding: 50px 60px;
+                font-family: 'Roboto', sans-serif;
+                background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
                 width: 1080px;
                 min-height: 1080px;
                 height: auto;
@@ -112,78 +122,113 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
                 flex-direction: column;
                 align-items: center;
                 box-sizing: border-box;
+                position: relative;
             }}
             .header {{
                 text-align: center;
-                margin-bottom: 40px;
+                margin-bottom: 50px;
                 width: 100%;
+                z-index: 10;
             }}
             .title {{
-                font-size: 80px;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 70px;
                 font-weight: 900;
                 color: #0f172a;
                 line-height: 1.1;
-                margin-bottom: 25px;
-                text-wrap: balance;
+                margin-bottom: 15px;
+                text-transform: uppercase;
+                letter-spacing: -1px;
             }}
             .subtitle {{
-                font-size: 42px;
-                font-weight: 600;
-                color: #475569;
-                text-wrap: balance;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 32px;
+                font-weight: 700;
+                color: {primary_color};
             }}
-            .illustration-container {{
-                width: 100%;
+            
+            .infographic-core {{
                 display: flex;
-                justify-content: center;
-                margin-bottom: 60px;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                position: relative;
+                margin-top: 10px;
             }}
-            .illustration {{
-                width: 800px;
-                height: 600px;
+            
+            /* The DALL-E Image integrated as a central orb/feature */
+            .center-art {{
+                width: 440px;
+                height: 440px;
                 background-image: url('{b64_image}');
                 background-size: cover;
                 background-position: center;
-                border-radius: 40px;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-                border: 8px solid white;
+                border-radius: 50%;
+                box-shadow: 0 30px 60px rgba(0,0,0,0.15), 0 0 0 15px rgba(255,255,255,0.6);
+                z-index: 5;
+                position: relative;
             }}
-            .grid {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 40px;
-                width: 100%;
-                margin-bottom: 40px;
-            }}
-            .card {{
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 25px;
-                padding: 40px;
-                box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
-                border-left: 12px solid {primary_color};
+            
+            .side-column {{
                 display: flex;
                 flex-direction: column;
+                gap: 50px;
+                width: 290px;
+                z-index: 10;
             }}
-            .card-header {{
+            
+            .floating-block {{
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                position: relative;
+            }}
+            
+            .block-header {{
                 display: flex;
                 align-items: center;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
             }}
+            
             .icon {{
-                font-size: 55px;
-                margin-right: 20px;
+                font-size: 38px;
+                margin-right: 12px;
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
             }}
-            .card-title {{
-                font-size: 40px;
+            
+            .block-title {{
+                font-family: 'Montserrat', sans-serif;
+                font-size: 26px;
                 font-weight: 800;
                 color: #0f172a;
+                line-height: 1.2;
             }}
-            .card-body {{
-                font-size: 32px;
-                color: #334155;
+            
+            .block-body {{
+                font-size: 22px;
+                color: #475569;
                 line-height: 1.5;
-                font-weight: 500;
+                font-weight: 400;
             }}
+            
+            /* Decorative connecting lines in the background */
+            .decorative-lines {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 800px;
+                height: 2px;
+                background: repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 10px, transparent 10px, transparent 20px);
+                z-index: 1;
+            }}
+            .decorative-lines.vertical {{
+                width: 2px;
+                height: 600px;
+                background: repeating-linear-gradient(0deg, #cbd5e1 0, #cbd5e1 10px, transparent 10px, transparent 20px);
+            }}
+            
         </style>
     </head>
     <body>
@@ -192,12 +237,39 @@ def generate_infographic(infographic_data, infographic_type="alerta", output_pat
             <div class="subtitle">{subtitle}</div>
         </div>
         
-        {'<div class="illustration-container"><div class="illustration"></div></div>' if b64_image else ''}
-        
-        <div class="grid">
+        <div class="infographic-core">
+            <div class="decorative-lines"></div>
+            
+            <!-- Izquierda: 3 items -->
+            <div class="side-column" id="left-col">
+            </div>
+            
+            <!-- Centro: Imagen -->
+            <div class="center-art"></div>
+            
+            <!-- Derecha: 3 items -->
+            <div class="side-column" id="right-col">
+            </div>
+        </div>
+
+        <!-- Script para distribuir las tarjetas de forma equitativa -->
+        <div id="hidden-cards" style="display: none;">
             {cards_html}
         </div>
         
+        <script>
+            const blocks = document.querySelectorAll('#hidden-cards .floating-block');
+            const leftCol = document.getElementById('left-col');
+            const rightCol = document.getElementById('right-col');
+            
+            blocks.forEach((block, index) => {{
+                if(index % 2 === 0) {{
+                    leftCol.appendChild(block);
+                }} else {{
+                    rightCol.appendChild(block);
+                }}
+            }});
+        </script>
     </body>
     </html>
     """
