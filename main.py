@@ -160,6 +160,14 @@ def main():
         all_docs.extend(docs_normas)
         all_docs.extend(docs_cas)
         all_docs.extend(docs_prec)
+        
+        # PRUEBA FORZADA 2: RESOLUCION PEI WEB CON LINK VERDADERO
+        all_docs.append({
+            "text": "RESOLUCION N° 000049-2026/SUNAT. Fecha: 31/03/2026. Aprueban el programa para el envío de información a la SUNAT denominado PEI WEB que reemplaza al programa de envío de información a que se refiere la Resolución de Superintendencia N° 159-2017/SUNAT y establece la obligación de informar a través del nuevo programa dos documentos autorizados",
+            "url": "https://busquedas.elperuano.pe/dispositivo/NL/2500833-1",
+            "source": "El Peruano - Normas Legales",
+            "type": "norma"
+        })
     
     elif block == "afternoon":
         docs_inf = scrape_informes_sunat()
