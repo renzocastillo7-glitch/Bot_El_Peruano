@@ -6,7 +6,7 @@ from datetime import datetime
 
 from scraper import scrape_el_peruano_norms, scrape_informes_sunat, scrape_cuadernillos
 from summarizer import analyze_document
-from image_generator import generate_infographic
+from image_generator import generate_dalle_image
 from linkedin_publisher import post_to_linkedin
 from database import db
 
@@ -61,7 +61,6 @@ def process_documents(docs, block_name):
             "discard_reason": analysis_result.get("discard_reason", ""),
             "main_topic": analysis_result.get("main_topic", ""),
             "summary_internal": analysis_result.get("summary_internal", ""),
-            "infographic_type": analysis_result.get("infographic_type", ""),
             "effective_date": analysis_result.get("effective_date", "")
         })
         
@@ -94,12 +93,14 @@ def publish_top_candidate(candidates, block_name):
     
     print(f"\n[!] GANADOR para el bloque {block_name}: Score {score} - Tema: {an_res.get('main_topic')}")
     
-    # Generar Infografia
-    layout_json = an_res.get("infographic_layout_json", {})
-    info_type = an_res.get("infographic_type", "alerta")
-    
-    img_path = generate_infographic(layout_json, info_type, f"infografia_{block_name}.png")
-    
+    # Generar Imagen Situacional DALL-E
+    ill_prompt = an_res.get("illustration_prompt", "")
+    img_path = ""
+    if ill_prompt:
+        img_path = generate_dalle_image(ill_prompt, f"dalle_{block_name}.png")
+        if not img_path:
+            img_path = ""
+            
     text_post = an_res.get("linkedin_post", "")
     
     # Reemplazar placeholder [URL_DOC] si está
@@ -108,7 +109,6 @@ def publish_top_candidate(candidates, block_name):
     
     # DB - Insert Post
     post_id = db.insert_post({
-        # we don't have analysis_id easily unless we query, but we can assume logic or just track basic
         "text_content": text_post,
         "image_path": img_path
     })
@@ -131,7 +131,7 @@ def publish_top_candidate(candidates, block_name):
     if success:
         print("[OK] Publicado exitosamente.")
         # Limpiar img
-        if os.path.exists(img_path):
+        if img_path and os.path.exists(img_path):
             os.remove(img_path)
     else:
          print("[X] Falló la publicación.")
