@@ -1,6 +1,6 @@
 import os
 import json
-import anthropic
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,12 +10,12 @@ def analyze_document(document_text, source_type):
     Analiza un documento tributario individual, calcula su score 0-100, genera 
     el post para LinkedIn y crea la estructura JSON para la infografía.
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("Error: No se encontró la variable ANTHROPIC_API_KEY en el archivo .env")
+        print("Error: No se encontró la variable OPENAI_API_KEY en el archivo .env")
         return None
         
-    client = anthropic.Anthropic(api_key=api_key)
+    client = OpenAI(api_key=api_key)
     
     prompt = f"""
 Eres un analista tributario senior de la SUNAT y creador de contenido B2B en LinkedIn.
@@ -94,28 +94,21 @@ TEXTO A ANALIZAR:
 {document_text}
 """
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=3000,
+        response = client.chat.completions.create(
+            model="gpt-4o",
             temperature=0.2,
-            system="Eres un estricto validador y analista JSON de datos tributarios de Perú.",
+            response_format={ "type": "json_object" },
             messages=[
+                {"role": "system", "content": "Eres un estricto validador y analista JSON de datos tributarios de Perú. Tu única salida debe ser un objeto JSON puro."},
                 {"role": "user", "content": prompt}
             ]
         )
-        content = response.content[0].text.strip()
-        
-        # Parse JSON
-        if content.startswith("```json"):
-            content = content[7:-3].strip()
-        elif content.startswith("```"):
-            content = content[3:-3].strip()
-            
+        content = response.choices[0].message.content.strip()
         data = json.loads(content)
         return data
         
     except Exception as e:
-        print(f"Error en analyzer (Claude): {e}")
+        print(f"Error en analyzer (OpenAI): {e}")
         return None
 
 if __name__ == "__main__":
